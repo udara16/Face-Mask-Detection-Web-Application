@@ -1,4 +1,3 @@
-// Google Teachable Machine හරහා පුහුණු කරන ලද පෙරනිමි Mask Detection Model එකක්
 const URL = "https://teachablemachine.withgoogle.com/models/o8JgqH1lU/";
 
 let model, webcam, labelContainer, maxPredictions;
@@ -8,28 +7,41 @@ async function init() {
     startBtn.disabled = true;
     startBtn.innerText = "පූරණය වෙමින් පවතී...";
 
-    const modelURL = URL + "model.json";
-    const metadataURL = URL + "metadata.json";
+    try {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
 
-    // AI Model එක load කිරීම
-    model = await tmImage.load(modelURL, metadataURL);
-    maxPredictions = model.getTotalClasses();
+        // AI Model load කිරීම
+        model = await tmImage.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
 
-    // Webcam එක සකස් කිරීම
-    const flip = true; 
-    webcam = new tmImage.Webcam(300, 300, flip);
-    await webcam.setup();
-    await webcam.play();
-    window.requestAnimationFrame(loop);
+        // Webcam සකස් කිරීම
+        const flip = true;
+        webcam = new tmImage.Webcam(300, 300, flip);
+        
+        // කැමරා අවසර ලබා ගැනීම
+        await webcam.setup();
+        await webcam.play();
+        window.requestAnimationFrame(loop);
 
-    // Canvas එක DOM එකට එක් කිරීම
-    document.getElementById("webcam-container").appendChild(webcam.canvas);
-    labelContainer = document.getElementById("label-container");
-    for (let i = 0; i < maxPredictions; i++) {
-        labelContainer.appendChild(document.createElement("div"));
+        // Canvas එක DOM එකට එක් කිරීම
+        const webcamContainer = document.getElementById("webcam-container");
+        webcamContainer.innerHTML = ""; // කලින් තිබූ දෑ ඉවත් කිරීම
+        webcamContainer.appendChild(webcam.canvas);
+
+        labelContainer = document.getElementById("label-container");
+        labelContainer.innerHTML = "";
+        for (let i = 0; i < maxPredictions; i++) {
+            labelContainer.appendChild(document.createElement("div"));
+        }
+        
+        startBtn.innerText = "කැමරාව ක්‍රියාත්මකයි";
+    } catch (error) {
+        console.error("Camera Error:", error);
+        startBtn.disabled = false;
+        startBtn.innerText = "නැවත උත්සාහ කරන්න";
+        alert("කැමරාව ලබා ගැනීමට නොහැකි විය. කරුණාකර Browser Camera Permission පරීක්ෂා කරන්න.");
     }
-    
-    startBtn.innerText = "කැමරාව ක්‍රියාත්මකයි";
 }
 
 async function loop() {

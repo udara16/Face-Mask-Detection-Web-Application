@@ -7,7 +7,7 @@ A lightweight, real-time AI-powered web application that detects whether a perso
 ## 🚀 Live Demo
 
 Check out the live web app:  
-👉 **[https://udara16.github.io/](https://udara16.github.io/)**
+👉 **[https://udara16.github.io/Face-Mask-Detection-Web-Application/)** 
 
 ---
 

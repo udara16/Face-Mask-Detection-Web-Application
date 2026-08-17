@@ -1,6 +1,7 @@
 const URL = "https://teachablemachine.withgoogle.com/models/o8JgqH1lU/";
 
-let model, webcam, labelContainer, maxPredictions;
+let model, videoElement, labelContainer, maxPredictions;
+let isRunning = false;
 
 async function init() {
     const startBtn = document.getElementById("start-btn");
@@ -11,51 +12,60 @@ async function init() {
         const modelURL = URL + "model.json";
         const metadataURL = URL + "metadata.json";
 
-        // AI Model එක load කිරීම
+        // AI Model Load කිරීම
         model = await tmImage.load(modelURL, metadataURL);
         maxPredictions = model.getTotalClasses();
 
-        // Mobile සහ Desktop සඳහා කැමරා සැකසුම්
-        const width = 250;
-        const height = 250;
-        const flip = true; // Front camera එක සඳහා
-        
-        webcam = new tmImage.Webcam(width, height, flip);
+        videoElement = document.getElementById("webcam");
 
-        // Mobile Phone වල front camera එක ලබා ගැනීම සඳහා facingMode එක් කිරීම
-        await webcam.setup({ facingMode: "user" });
-        await webcam.play();
-        window.requestAnimationFrame(loop);
+        // Mobile සහ Browser standard video stream එක ලබා ගැනීම
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: "user",
+                width: { ideal: 250 },
+                height: { ideal: 250 }
+            },
+            audio: false
+        });
 
-        // Canvas එක DOM එකට එක් කිරීම
-        const webcamContainer = document.getElementById("webcam-container");
-        webcamContainer.innerHTML = "";
-        webcamContainer.appendChild(webcam.canvas);
+        videoElement.srcObject = stream;
 
-        // Results පෙන්වන labels සකස් කිරීම
+        // Video එක Play වන තෙක් බලා සිටීම
+        await new Promise((resolve) => {
+            videoElement.onloadedmetadata = () => {
+                videoElement.play();
+                resolve();
+            };
+        });
+
         labelContainer = document.getElementById("label-container");
         labelContainer.innerHTML = "";
         for (let i = 0; i < maxPredictions; i++) {
             labelContainer.appendChild(document.createElement("div"));
         }
-        
+
+        isRunning = true;
         startBtn.innerText = "කැමරාව ක්‍රියාත්මකයි";
+        predictLoop();
+
     } catch (error) {
         console.error("Camera Error:", error);
         startBtn.disabled = false;
         startBtn.innerText = "නැවත උත්සාහ කරන්න";
-        alert("කැමරාව ලබා ගැනීමට නොහැකි විය. Phone Settings සහ Chrome Permissions පරීක්ෂා කරන්න.");
+        alert("කැමරා දෝෂයකි: " + error.name + " - " + error.message);
     }
 }
 
-async function loop() {
-    webcam.update();
+async function predictLoop() {
+    if (!isRunning) return;
     await predict();
-    window.requestAnimationFrame(loop);
+    window.requestAnimationFrame(predictLoop);
 }
 
 async function predict() {
-    const prediction = await model.predict(webcam.canvas);
+    if (!videoElement || videoElement.readyState !== 4) return;
+
+    const prediction = await model.predict(videoElement);
     for (let i = 0; i < maxPredictions; i++) {
         const className = prediction[i].className;
         const probability = (prediction[i].probability * 100).toFixed(0);

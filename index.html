@@ -3,25 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Face Mask Detection AI</title>
+  <title>Face Mask Detector</title>
   <link rel="stylesheet" href="style.css">
-  <!-- TensorFlow.js සහ Face Detection Model Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
 </head>
 <body>
   <div class="container">
     <h1>Face Mask Detector</h1>
     <p>කැමරාව ක්‍රියාත්මක කර මුහුණ පෙන්වන්න.</p>
     
-    <button type="button" id="start-btn" onclick="init()">කැමරාව අරඹන්න</button>
+    <button type="button" id="start-btn">කැමරාව අරඹන්න</button>
     
     <div id="video-wrapper">
       <video id="webcam" playsinline autoplay muted width="280" height="280"></video>
       <canvas id="overlay-canvas" width="280" height="280"></canvas>
     </div>
 
-    <div id="status" style="margin-top: 10px; font-weight: bold;"></div>
+    <div id="status">බොත්තම ඔබන්න...</div>
     <div id="label-container"></div>
   </div>
 

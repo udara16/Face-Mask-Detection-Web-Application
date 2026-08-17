@@ -3,21 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Face Mask Detection AI</title>
+  <title>Face Mask Detector</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.5/dist/teachablemachine-image.min.js"></script>
 </head>
 <body>
   <div class="container">
     <h1>Face Mask Detector</h1>
-    <p>කැමරාව ක්‍රියාත්මක කර Mask එකක් පැළඳ සිටීදැයි පරීක්ෂා කරන්න.</p>
+    <p>කැමරාව ක්‍රියාත්මක කර Mask එකක් පැළඳ සිටීදැයි බලන්න.</p>
     
     <button type="button" id="start-btn" onclick="init()">කැමරාව අරඹන්න</button>
     
-    <div id="video-container">
-      <video id="webcam" autoplay playsinline muted width="250" height="250"></video>
+    <div id="video-wrapper">
+      <video id="webcam" playsinline autoplay muted width="260" height="260"></video>
+      <canvas id="canvas" width="260" height="260" style="display:none;"></canvas>
     </div>
+
+    <div id="status" style="margin-top: 10px; font-size: 14px; color: #666;"></div>
     <div id="label-container"></div>
   </div>
 

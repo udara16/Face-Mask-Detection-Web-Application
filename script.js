@@ -6,37 +6,27 @@ let isRunning = false;
 async function init() {
     const startBtn = document.getElementById("start-btn");
     startBtn.disabled = true;
-    startBtn.innerText = "පූරණය වෙමින් පවතී...";
+    startBtn.innerText = "කැමරාව සක්‍රිය වෙමින්...";
+
+    videoElement = document.getElementById("webcam");
 
     try {
-        const modelURL = URL + "model.json";
-        const metadataURL = URL + "metadata.json";
-
-        // AI Model Load කිරීම
-        model = await tmImage.load(modelURL, metadataURL);
-        maxPredictions = model.getTotalClasses();
-
-        videoElement = document.getElementById("webcam");
-
-        // Mobile සහ Browser standard video stream එක ලබා ගැනීම
+        // 1. කැමරාව මුලින්ම Open කර ගැනීම
         const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: "user",
-                width: { ideal: 250 },
-                height: { ideal: 250 }
-            },
+            video: { facingMode: "user" },
             audio: false
         });
-
+        
         videoElement.srcObject = stream;
+        await videoElement.play();
 
-        // Video එක Play වන තෙක් බලා සිටීම
-        await new Promise((resolve) => {
-            videoElement.onloadedmetadata = () => {
-                videoElement.play();
-                resolve();
-            };
-        });
+        startBtn.innerText = "AI Model එක Load වෙමින්...";
+
+        // 2. AI Model එක පූරණය කිරීම
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+        model = await tmImage.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
 
         labelContainer = document.getElementById("label-container");
         labelContainer.innerHTML = "";
@@ -45,14 +35,14 @@ async function init() {
         }
 
         isRunning = true;
-        startBtn.innerText = "කැමරාව ක්‍රියාත්මකයි";
+        startBtn.innerText = "සාර්ථකයි - පරීක්ෂා කෙරේ";
         predictLoop();
 
     } catch (error) {
         console.error("Camera Error:", error);
         startBtn.disabled = false;
         startBtn.innerText = "නැවත උත්සාහ කරන්න";
-        alert("කැමරා දෝෂයකි: " + error.name + " - " + error.message);
+        alert("දෝෂය: " + error.name + " (" + error.message + ")");
     }
 }
 
@@ -63,7 +53,7 @@ async function predictLoop() {
 }
 
 async function predict() {
-    if (!videoElement || videoElement.readyState !== 4) return;
+    if (!videoElement || videoElement.readyState < 2) return;
 
     const prediction = await model.predict(videoElement);
     for (let i = 0; i < maxPredictions; i++) {

@@ -11,24 +11,28 @@ async function init() {
         const modelURL = URL + "model.json";
         const metadataURL = URL + "metadata.json";
 
-        // AI Model load කිරීම
+        // AI Model එක load කිරීම
         model = await tmImage.load(modelURL, metadataURL);
         maxPredictions = model.getTotalClasses();
 
-        // Webcam සකස් කිරීම
-        const flip = true;
-        webcam = new tmImage.Webcam(300, 300, flip);
+        // Mobile සහ Desktop සඳහා කැමරා සැකසුම්
+        const width = 250;
+        const height = 250;
+        const flip = true; // Front camera එක සඳහා
         
-        // කැමරා අවසර ලබා ගැනීම
-        await webcam.setup();
+        webcam = new tmImage.Webcam(width, height, flip);
+
+        // Mobile Phone වල front camera එක ලබා ගැනීම සඳහා facingMode එක් කිරීම
+        await webcam.setup({ facingMode: "user" });
         await webcam.play();
         window.requestAnimationFrame(loop);
 
         // Canvas එක DOM එකට එක් කිරීම
         const webcamContainer = document.getElementById("webcam-container");
-        webcamContainer.innerHTML = ""; // කලින් තිබූ දෑ ඉවත් කිරීම
+        webcamContainer.innerHTML = "";
         webcamContainer.appendChild(webcam.canvas);
 
+        // Results පෙන්වන labels සකස් කිරීම
         labelContainer = document.getElementById("label-container");
         labelContainer.innerHTML = "";
         for (let i = 0; i < maxPredictions; i++) {
@@ -40,7 +44,7 @@ async function init() {
         console.error("Camera Error:", error);
         startBtn.disabled = false;
         startBtn.innerText = "නැවත උත්සාහ කරන්න";
-        alert("කැමරාව ලබා ගැනීමට නොහැකි විය. කරුණාකර Browser Camera Permission පරීක්ෂා කරන්න.");
+        alert("කැමරාව ලබා ගැනීමට නොහැකි විය. Phone Settings සහ Chrome Permissions පරීක්ෂා කරන්න.");
     }
 }
 
@@ -64,7 +68,7 @@ async function predict() {
         }
 
         labelContainer.childNodes[i].innerHTML = `
-            <div class="result-tag" style="color: ${color};">
+            <div class="result-tag" style="color: ${color}; font-weight: bold; margin: 6px 0;">
                 ${className}: ${probability}%
             </div>
         `;

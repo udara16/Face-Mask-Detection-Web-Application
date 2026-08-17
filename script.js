@@ -1,19 +1,25 @@
-let model, video, canvas, ctx;
+let model = null;
+let video, canvas, ctx;
 let isPredicting = false;
 
-async function init() {
+document.addEventListener("DOMContentLoaded", () => {
+    const startBtn = document.getElementById("start-btn");
+    startBtn.addEventListener("click", startApp);
+});
+
+async function startApp() {
     const startBtn = document.getElementById("start-btn");
     const statusText = document.getElementById("status");
-    
+
     startBtn.disabled = true;
-    statusText.innerText = "කැමරාව සක්‍රිය වෙමින් පවතී...";
+    statusText.innerText = "කැමරාව ඉල්ලුම් කරමින් පවතී...";
 
     video = document.getElementById("webcam");
     canvas = document.getElementById("overlay-canvas");
     ctx = canvas.getContext("2d");
 
     try {
-        // කැමරා stream එක ලබා ගැනීම
+        // 1. කැමරාව Request කිරීම
         const stream = await navigator.mediaDevices.getUserMedia({
             audio: false,
             video: {
@@ -24,37 +30,35 @@ async function init() {
         });
 
         video.srcObject = stream;
+        await video.play();
 
-        await new Promise((resolve) => {
-            video.onloadedmetadata = () => {
-                video.play();
-                resolve();
-            };
-        });
+        statusText.innerText = "AI Model එක Load වෙමින් පවතී...";
 
-        statusText.innerText = "AI Face Model එක Load වෙමින් පවතී...";
-
-        // Official BlazeFace Model එක Load කිරීම
+        // 2. BlazeFace Model එක පූරණය කිරීම
+        if (typeof blazeface === "undefined") {
+            throw new Error("AI Library load වී නොමැත. කරුණාකර Internet Connection පරීක්ෂා කරන්න.");
+        }
+        
         model = await blazeface.load();
 
-        statusText.innerText = "සක්‍රියයි - මුහුණ පරීක්ෂා කෙරේ";
+        statusText.innerText = "සක්‍රියයි - මුහුණ හඳුනාගනිමින්...";
         startBtn.style.display = "none";
 
         isPredicting = true;
-        detectFaceAndMask();
+        detectFace();
 
     } catch (err) {
         console.error(err);
+        statusText.innerText = "දෝෂයකි: " + err.message;
         startBtn.disabled = false;
-        startBtn.innerText = "නැවත උත්සාහ කරන්න";
         alert("දෝෂය: " + err.message);
     }
 }
 
-async function detectFaceAndMask() {
+async function detectFace() {
     if (!isPredicting) return;
 
-    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    if (video.readyState >= 2 && model) {
         const predictions = await model.estimateFaces(video, false);
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -66,43 +70,37 @@ async function detectFaceAndMask() {
                 const end = predictions[i].bottomRight;
                 const size = [end[0] - start[0], end[1] - start[1]];
 
-                // Landmarks (ඇස්, නාසය, මුඛය) පරික්ෂා කිරීම
                 const landmarks = predictions[i].landmarks;
                 const nose = landmarks[2];
                 const mouth = landmarks[3];
 
-                // නාසය සහ මුඛය අතර visibility/pixel contrast මත පදනම් වූ mask verification
-                // මුහුණේ පහළ කොටස ආවරණය වී ඇත්දැයි බැලීම
                 let isMaskOn = false;
                 if (mouth && nose) {
-                    const mouthY = mouth[1];
-                    const noseY = nose[1];
-                    // මුඛය සහ නාසයේ දුර අනුව Mask එකක් ඇති බව හඳුනාගැනීම
-                    if (Math.abs(mouthY - noseY) < 15 || mouth[0] === undefined) {
+                    const diff = Math.abs(mouth[1] - nose[1]);
+                    if (diff < 18) {
                         isMaskOn = true;
                     }
                 }
 
-                // කොටුව (Bounding Box) ඇඳීම
                 const color = isMaskOn ? "#28a745" : "#dc3545";
                 ctx.strokeStyle = color;
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 4;
                 ctx.strokeRect(start[0], start[1], size[0], size[1]);
 
                 labelContainer.innerHTML = `
-                    <div class="result-tag" style="background-color: ${isMaskOn ? '#d4edda' : '#f8d7da'}; color: ${color};">
+                    <div class="result-tag" style="background-color: ${isMaskOn ? '#d4edda' : '#f8d7da'}; color: ${color}; font-weight: bold; padding: 10px; margin-top: 10px; border-radius: 6px;">
                         ${isMaskOn ? "Mask පැළඳ ඇත (Mask Detected)" : "Mask පැළඳ නොමැත (No Mask)"}
                     </div>
                 `;
             }
         } else {
             labelContainer.innerHTML = `
-                <div class="result-tag" style="background-color: #fff3cd; color: #856404;">
+                <div class="result-tag" style="background-color: #fff3cd; color: #856404; font-weight: bold; padding: 10px; margin-top: 10px; border-radius: 6px;">
                     මුහුණක් හඳුනාගත නොහැකි විය
                 </div>
             `;
         }
     }
 
-    window.requestAnimationFrame(detectFaceAndMask);
+    window.requestAnimationFrame(detectFace);
 }

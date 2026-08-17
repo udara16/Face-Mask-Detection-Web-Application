@@ -1,4 +1,4 @@
-# 😷 Real-Time AI Face Mask Detector
+# 😷 Real-Time AI Face Mask Detector by Udara Dissanayake
 
 A lightweight, real-time AI-powered web application that detects whether a person is wearing a face mask using their device camera. Built using vanilla JavaScript, HTML5, CSS3, and TensorFlow.js (BlazeFace model).
 
